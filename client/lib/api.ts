@@ -1,6 +1,13 @@
 import type { LoginResponse, ErrorResponse } from '@/types/auth'
+import type { PokemonListResponse } from '@/types/pokemon'
+import { TOKEN_KEY } from './constants'
+import { saveToken, getToken, removeToken } from './actions'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
+// Use empty string to make relative API calls that go through Next.js rewrites
+// This ensures cookies work properly (same-origin requests)
+const API_BASE_URL = process.env.API_BASE_URL || 'http://127.0.0.1:3001'
+
+export { TOKEN_KEY, saveToken, getToken, removeToken }
 
 /**
  * Custom error class for API errors
@@ -13,6 +20,24 @@ export class ApiError extends Error {
     this.name = 'ApiError'
     this.status = status
   }
+}
+
+
+/**
+ * Get headers with authentication token
+ */
+async function getAuthHeaders(): Promise<HeadersInit> {
+  // Fetch Pokemon data during SSR
+  const authToken = await getToken()
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+  }
+
+  if (authToken) {
+    headers['Authorization'] = `Bearer ${authToken}`
+  }
+
+  return headers
 }
 
 /**
@@ -45,7 +70,7 @@ export async function login(
       headers: {
         'Content-Type': 'application/json',
       },
-      credentials: 'include', // Include HTTP-only cookies
+      credentials: 'include',
       body: JSON.stringify({ username, password }),
     })
 
@@ -57,7 +82,11 @@ export async function login(
       throw new ApiError(errorMessage, response.status)
     }
 
-    return data as LoginResponse
+    // Save the token to cookie
+    const loginData = data as LoginResponse
+    await saveToken(loginData.token)
+
+    return loginData
   } catch (error) {
     if (error instanceof ApiError) {
       throw error
@@ -86,13 +115,20 @@ export async function logout(): Promise<void> {
   try {
     const response = await fetch(`${API_BASE_URL}/api/logout`, {
       method: 'POST',
+      headers: await getAuthHeaders(),
       credentials: 'include',
     })
 
     if (!response.ok) {
       throw new ApiError('Logout failed', response.status)
     }
+
+    // Remove the token from cookie
+    removeToken()
   } catch (error) {
+    // Always remove token even if API call fails
+    removeToken()
+
     if (error instanceof ApiError) {
       throw error
     }
@@ -130,5 +166,52 @@ export async function checkSession(): Promise<LoginResponse | null> {
     return await response.json()
   } catch {
     return null
+  }
+}
+
+/**
+ * Fetch Pokemon list from API
+ *
+ * @param page - Page number (default: 1)
+ * @param limit - Number of Pokemon per page (default: 20)
+ * @returns Promise resolving to PokemonListResponse
+ * @throws {ApiError} When API call fails
+ *
+ * @example
+ * ```ts
+ * const pokemons = await fetchPokemons(1, 20)
+ * console.log('Found', pokemons.count, 'Pokemon')
+ * ```
+ */
+export async function fetchPokemons(
+  page: number = 1,
+  limit: number = 20
+): Promise<PokemonListResponse> {
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/api/pokemons?page=${page}&limit=${limit}`,
+      {
+        headers: await getAuthHeaders(),
+        credentials: 'include',
+      }
+    )
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new ApiError('Not authenticated', 401)
+      }
+      throw new ApiError('Failed to fetch Pokemon', response.status)
+    }
+
+    return await response.json()
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw error
+    }
+
+    throw new ApiError(
+      error instanceof Error ? error.message : 'Network error',
+      0
+    )
   }
 }

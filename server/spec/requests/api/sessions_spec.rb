@@ -122,24 +122,22 @@ RSpec.describe 'Api::Sessions', type: :request do
 
   describe 'GET /api/session' do
     context 'when authenticated' do
-      before do
-        post '/api/login', params: { username: 'testuser', password: 'password123' }
-      end
+      let(:headers) { auth_headers }
 
       it 'returns 200 status' do
-        get '/api/session'
+        get '/api/session', headers: headers
         expect(response).to have_http_status(:ok)
       end
 
       it 'returns user data' do
-        get '/api/session'
+        get '/api/session', headers: headers
         json = JSON.parse(response.body)
         expect(json['user']['username']).to eq('testuser')
         expect(json['user']['id']).to eq(user.id)
       end
 
       it 'does not return password_digest' do
-        get '/api/session'
+        get '/api/session', headers: headers
         json = JSON.parse(response.body)
         expect(json['user']).not_to have_key('password_digest')
       end
@@ -167,8 +165,8 @@ RSpec.describe 'Api::Sessions', type: :request do
     end
 
     it 'never exposes password_digest in session check response' do
-      post '/api/login', params: { username: 'testuser', password: 'password123' }
-      get '/api/session'
+      headers = auth_headers
+      get '/api/session', headers: headers
       expect(response.body).not_to include('password_digest')
       expect(response.body).not_to include(user.password_digest)
     end

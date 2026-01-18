@@ -4,18 +4,18 @@ import type { NextRequest } from 'next/server'
 /**
  * Authentication middleware
  *
- * Protects all routes except /login by checking for session cookie.
+ * Protects all routes except /login by checking for auth token cookie.
  * Redirects unauthenticated users to /login.
  * Redirects authenticated users away from /login to /.
  */
 export function middleware(request: NextRequest) {
-  const sessionCookie = request.cookies.get('_pokedex_session')
+  const tokenCookie = request.cookies.get('_pokedex_token')
   const { pathname } = request.nextUrl
 
   // Public route: /login
   if (pathname === '/login') {
     // If user is authenticated, redirect to dashboard
-    if (sessionCookie) {
+    if (tokenCookie) {
       return NextResponse.redirect(new URL('/', request.url))
     }
     // Allow access to login page
@@ -24,7 +24,7 @@ export function middleware(request: NextRequest) {
 
   // Protected routes: all other routes
   // If user is not authenticated, redirect to login
-  if (!sessionCookie) {
+  if (!tokenCookie) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 

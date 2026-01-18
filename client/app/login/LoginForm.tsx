@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, FormEvent } from 'react'
-import { useRouter } from 'next/navigation'
 import { login, ApiError } from '@/lib/api'
 
 /**
@@ -11,7 +10,6 @@ import { login, ApiError } from '@/lib/api'
  * Includes accessibility features (ARIA labels) and loading states.
  */
 export default function LoginForm() {
-  const router = useRouter()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [errors, setErrors] = useState<{
@@ -55,8 +53,9 @@ export default function LoginForm() {
 
     try {
       await login(username, password)
-      // Successful login - redirect to main page
-      router.push('/')
+      // Successful login - use window.location for full page reload
+      // This ensures the middleware processes the new auth cookie
+      window.location.href = '/'
     } catch (error) {
       if (error instanceof ApiError) {
         if (error.status === 401) {
@@ -117,11 +116,10 @@ export default function LoginForm() {
           aria-label="Username"
           aria-invalid={!!errors.username}
           aria-describedby={errors.username ? 'username-error' : undefined}
-          className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
-            errors.username
+          className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${errors.username
               ? 'border-red-300 bg-red-50'
               : 'border-gray-300 bg-white'
-          }`}
+            }`}
           placeholder="Enter your username"
           disabled={isLoading}
         />
@@ -152,11 +150,10 @@ export default function LoginForm() {
           aria-label="Password"
           aria-invalid={!!errors.password}
           aria-describedby={errors.password ? 'password-error' : undefined}
-          className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
-            errors.password
+          className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${errors.password
               ? 'border-red-300 bg-red-50'
               : 'border-gray-300 bg-white'
-          }`}
+            }`}
           placeholder="Enter your password"
           disabled={isLoading}
         />

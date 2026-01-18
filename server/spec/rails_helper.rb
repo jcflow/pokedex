@@ -68,4 +68,19 @@ RSpec.configure do |config|
   config.filter_rails_from_backtrace!
   # arbitrary gems may also be filtered via:
   # config.filter_gems_from_backtrace("gem name")
+
+  # Helper methods for authenticated requests
+  config.include Module.new {
+    ##
+    # Get authorization headers with Bearer token for authenticated requests
+    #
+    # @param username [String] The username to login with
+    # @param password [String] The password to login with
+    # @return [Hash] Headers hash with Authorization Bearer token
+    def auth_headers(username: 'testuser', password: 'password123')
+      post '/api/login', params: { username: username, password: password }
+      token = JSON.parse(response.body)['token']
+      { 'Authorization' => "Bearer #{token}" }
+    end
+  }, type: :request
 end

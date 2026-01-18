@@ -52,24 +52,6 @@ class Api::PokemonsController < ApplicationController
   private
 
   ##
-  # Get current authenticated user from session
-  #
-  # @return [User, nil] The current user or nil if not authenticated
-  def current_user
-    @current_user ||= User.find_by(id: session[:user_id]) if session[:user_id]
-  end
-
-  ##
-  # Require authentication before accessing endpoints
-  #
-  # @return [JSON] Error message with 401 status if not authenticated
-  def require_authentication
-    return if current_user
-
-    render json: { error: "Not authenticated" }, status: :unauthorized
-  end
-
-  ##
   # Get or create PokemonService instance
   #
   # @return [PokemonService] The service instance

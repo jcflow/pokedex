@@ -14,3 +14,4 @@ server/coverage/
 server/.byebug_history
 server/config/master.key
 server/config/credentials/*.key
+server/storage/

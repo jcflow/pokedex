@@ -1,27 +1,25 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { useRouter } from 'next/navigation'
 import LoginForm from '@/app/login/LoginForm'
 import * as api from '@/lib/api'
-
-// Mock next/navigation
-jest.mock('next/navigation', () => ({
-  useRouter: jest.fn(),
-}))
 
 // Mock API
 jest.mock('@/lib/api')
 
 describe('LoginForm', () => {
-  const mockPush = jest.fn()
-  const mockRefresh = jest.fn()
+  // Mock window.location
+  const originalLocation = window.location
 
   beforeEach(() => {
     jest.clearAllMocks()
-    ;(useRouter as jest.Mock).mockReturnValue({
-      push: mockPush,
-      refresh: mockRefresh,
-    })
+
+    // Mock window.location.href
+    delete (window as { location?: Location }).location
+    window.location = { ...originalLocation, href: '' } as Location
+  })
+
+  afterEach(() => {
+    window.location = originalLocation
   })
 
   it('renders username and password inputs', () => {
@@ -59,6 +57,7 @@ describe('LoginForm', () => {
         created_at: '2024-01-01T00:00:00Z',
         updated_at: '2024-01-01T00:00:00Z',
       },
+      token: 'mock-token-123',
     }
 
     ;(api.login as jest.Mock).mockResolvedValue(mockLoginResponse)
@@ -75,7 +74,7 @@ describe('LoginForm', () => {
 
     await waitFor(() => {
       expect(api.login).toHaveBeenCalledWith('testuser', 'password123')
-      expect(mockPush).toHaveBeenCalledWith('/')
+      expect(window.location.href).toBe('/')
     })
   })
 
@@ -152,10 +151,11 @@ describe('LoginForm', () => {
         created_at: '2024-01-01T00:00:00Z',
         updated_at: '2024-01-01T00:00:00Z',
       },
+      token: 'mock-token-123',
     })
 
     await waitFor(() => {
-      expect(mockPush).toHaveBeenCalledWith('/')
+      expect(window.location.href).toBe('/')
     })
   })
 

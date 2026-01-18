@@ -55,10 +55,9 @@ RSpec.describe 'Api::Pokemons', type: :request do
 
   describe 'GET /api/pokemons' do
     context 'when authenticated' do
-      before do
-        # Login the user
-        post '/api/login', params: { username: 'testuser', password: 'password123' }
+      let(:headers) { auth_headers }
 
+      before do
         # Stub the PokeAPI call
         stub_request(:get, "#{base_url}/pokemon?offset=0&limit=20")
           .to_return(
@@ -69,12 +68,12 @@ RSpec.describe 'Api::Pokemons', type: :request do
       end
 
       it 'returns 200 status' do
-        get '/api/pokemons'
+        get '/api/pokemons', headers: headers
         expect(response).to have_http_status(:ok)
       end
 
       it 'returns paginated pokemon data' do
-        get '/api/pokemons'
+        get '/api/pokemons', headers: headers
         json = JSON.parse(response.body)
 
         expect(json['count']).to eq(1302)
@@ -91,7 +90,7 @@ RSpec.describe 'Api::Pokemons', type: :request do
             headers: { 'Content-Type' => 'application/json' }
           )
 
-        get '/api/pokemons', params: { page: 2 }
+        get '/api/pokemons', params: { page: 2 }, headers: headers
         expect(response).to have_http_status(:ok)
       end
 
@@ -103,12 +102,12 @@ RSpec.describe 'Api::Pokemons', type: :request do
             headers: { 'Content-Type' => 'application/json' }
           )
 
-        get '/api/pokemons', params: { limit: 50 }
+        get '/api/pokemons', params: { limit: 50 }, headers: headers
         expect(response).to have_http_status(:ok)
       end
 
       it 'uses default page and limit when not specified' do
-        get '/api/pokemons'
+        get '/api/pokemons', headers: headers
         expect(response).to have_http_status(:ok)
         # Should use page 1 and limit 20 by default
         expect(WebMock).to have_requested(:get, "#{base_url}/pokemon?offset=0&limit=20")
@@ -129,19 +128,20 @@ RSpec.describe 'Api::Pokemons', type: :request do
     end
 
     context 'when PokeAPI fails' do
+      let(:headers) { auth_headers }
+
       before do
-        post '/api/login', params: { username: 'testuser', password: 'password123' }
         stub_request(:get, "#{base_url}/pokemon?offset=0&limit=20")
           .to_return(status: 500, body: 'Internal Server Error')
       end
 
       it 'returns 503 status' do
-        get '/api/pokemons'
+        get '/api/pokemons', headers: headers
         expect(response).to have_http_status(:service_unavailable)
       end
 
       it 'returns error message' do
-        get '/api/pokemons'
+        get '/api/pokemons', headers: headers
         json = JSON.parse(response.body)
         expect(json['error']).to include('PokeAPI')
       end
@@ -150,10 +150,9 @@ RSpec.describe 'Api::Pokemons', type: :request do
 
   describe 'GET /api/pokemons/:id' do
     context 'when authenticated' do
-      before do
-        # Login the user
-        post '/api/login', params: { username: 'testuser', password: 'password123' }
+      let(:headers) { auth_headers }
 
+      before do
         # Stub the PokeAPI call
         stub_request(:get, "#{base_url}/pokemon/1")
           .to_return(
@@ -164,12 +163,12 @@ RSpec.describe 'Api::Pokemons', type: :request do
       end
 
       it 'returns 200 status' do
-        get '/api/pokemons/1'
+        get '/api/pokemons/1', headers: headers
         expect(response).to have_http_status(:ok)
       end
 
       it 'returns detailed pokemon data' do
-        get '/api/pokemons/1'
+        get '/api/pokemons/1', headers: headers
         json = JSON.parse(response.body)
 
         expect(json['id']).to eq(1)
@@ -179,7 +178,7 @@ RSpec.describe 'Api::Pokemons', type: :request do
       end
 
       it 'includes abilities' do
-        get '/api/pokemons/1'
+        get '/api/pokemons/1', headers: headers
         json = JSON.parse(response.body)
 
         expect(json['abilities']).to be_an(Array)
@@ -187,14 +186,14 @@ RSpec.describe 'Api::Pokemons', type: :request do
       end
 
       it 'includes moves' do
-        get '/api/pokemons/1'
+        get '/api/pokemons/1', headers: headers
         json = JSON.parse(response.body)
 
         expect(json['moves']).to be_an(Array)
       end
 
       it 'includes forms' do
-        get '/api/pokemons/1'
+        get '/api/pokemons/1', headers: headers
         json = JSON.parse(response.body)
 
         expect(json['forms']).to be_an(Array)
@@ -202,7 +201,7 @@ RSpec.describe 'Api::Pokemons', type: :request do
       end
 
       it 'includes sprites' do
-        get '/api/pokemons/1'
+        get '/api/pokemons/1', headers: headers
         json = JSON.parse(response.body)
 
         expect(json['sprites']).to be_a(Hash)
@@ -210,7 +209,7 @@ RSpec.describe 'Api::Pokemons', type: :request do
       end
 
       it 'includes types' do
-        get '/api/pokemons/1'
+        get '/api/pokemons/1', headers: headers
         json = JSON.parse(response.body)
 
         expect(json['types']).to be_an(Array)
@@ -225,7 +224,7 @@ RSpec.describe 'Api::Pokemons', type: :request do
             headers: { 'Content-Type' => 'application/json' }
           )
 
-        get '/api/pokemons/bulbasaur'
+        get '/api/pokemons/bulbasaur', headers: headers
         expect(response).to have_http_status(:ok)
         json = JSON.parse(response.body)
         expect(json['name']).to eq('bulbasaur')
@@ -246,38 +245,40 @@ RSpec.describe 'Api::Pokemons', type: :request do
     end
 
     context 'when pokemon does not exist' do
+      let(:headers) { auth_headers }
+
       before do
-        post '/api/login', params: { username: 'testuser', password: 'password123' }
         stub_request(:get, "#{base_url}/pokemon/999999")
           .to_return(status: 404, body: 'Not Found')
       end
 
       it 'returns 404 status' do
-        get '/api/pokemons/999999'
+        get '/api/pokemons/999999', headers: headers
         expect(response).to have_http_status(:not_found)
       end
 
       it 'returns error message' do
-        get '/api/pokemons/999999'
+        get '/api/pokemons/999999', headers: headers
         json = JSON.parse(response.body)
         expect(json['error']).to include('not found')
       end
     end
 
     context 'when PokeAPI fails' do
+      let(:headers) { auth_headers }
+
       before do
-        post '/api/login', params: { username: 'testuser', password: 'password123' }
         stub_request(:get, "#{base_url}/pokemon/1")
           .to_return(status: 500, body: 'Internal Server Error')
       end
 
       it 'returns 503 status' do
-        get '/api/pokemons/1'
+        get '/api/pokemons/1', headers: headers
         expect(response).to have_http_status(:service_unavailable)
       end
 
       it 'returns error message' do
-        get '/api/pokemons/1'
+        get '/api/pokemons/1', headers: headers
         json = JSON.parse(response.body)
         expect(json['error']).to include('PokeAPI')
       end

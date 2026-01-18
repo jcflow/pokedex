@@ -18,9 +18,9 @@
 #
 class Api::SessionsController < ApplicationController
   ##
-  # Authenticate user and create session
+  # Authenticate user and return session token
   #
-  # @return [JSON] User data (excluding password_digest) on success
+  # @return [JSON] User data and session token on success
   # @return [JSON] Error message with 400/401 status on failure
   def create
     # Validate required parameters
@@ -33,8 +33,14 @@ class Api::SessionsController < ApplicationController
 
     # Authenticate user
     if user&.authenticate(params[:password])
+      # Generate session token (user_id encoded with timestamp)
+      token = Base64.strict_encode64("#{user.id}:#{Time.now.to_i}")
+
+      # Store token in session for server-side validation
+      session[:token] = token
       session[:user_id] = user.id
-      render json: { user: user_json(user) }, status: :ok
+
+      render json: { user: user_json(user), token: token }, status: :ok
     else
       render json: { error: "Invalid username or password" }, status: :unauthorized
     end
@@ -63,14 +69,6 @@ class Api::SessionsController < ApplicationController
   end
 
   private
-
-  ##
-  # Get current authenticated user from session
-  #
-  # @return [User, nil] The current user or nil if not authenticated
-  def current_user
-    @current_user ||= User.find_by(id: session[:user_id]) if session[:user_id]
-  end
 
   ##
   # Serialize user to JSON, excluding password_digest
