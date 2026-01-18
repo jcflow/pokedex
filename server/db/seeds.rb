@@ -7,3 +7,15 @@
 #   ["Action", "Comedy", "Drama", "Horror"].each do |genre_name|
 #     MovieGenre.find_or_create_by!(name: genre_name)
 #   end
+
+# Create default admin user for authentication
+# Uses find_or_create_by to ensure idempotent seeding
+admin = User.find_or_initialize_by(username: 'admin')
+if admin.new_record?
+  admin.password = 'admin'
+  admin.password_confirmation = 'admin'
+  admin.save!
+  puts 'Created admin user (username: admin, password: admin)'
+else
+  puts 'Admin user already exists'
+end
