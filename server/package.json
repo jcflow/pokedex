@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "bin/rails server -p 3001",
-    "test": "bundle exec rspec",
-    "lint": "bundle exec rubocop"
+    "dev": "eval \"$(rbenv init - zsh)\" && bin/rails server -p 3001",
+    "test": "eval \"$(rbenv init - zsh)\" && bundle exec rspec",
+    "lint": "eval \"$(rbenv init - zsh)\" && bundle exec rubocop"
   }
 }

@@ -6,11 +6,17 @@
     "dev": "concurrently \"pnpm dev:server\" \"pnpm dev:client\"",
     "dev:client": "pnpm --filter client dev",
     "dev:server": "pnpm --filter server dev",
-    "test": "pnpm test:server && pnpm test:client",
-    "test:client": "pnpm --filter client test",
-    "test:server": "pnpm --filter server test",
+    "build": "pnpm build:client",
     "build:client": "pnpm --filter client build",
-    "lint": "pnpm --filter client lint && cd server && bundle exec rubocop"
+    "start": "pnpm start:client",
+    "start:client": "pnpm --filter client start",
+    "test": "pnpm test:server && pnpm test:client",
+    "test:client": "pnpm --filter client test:ci",
+    "test:server": "pnpm --filter server test",
+    "test:watch": "pnpm --filter client test",
+    "lint": "pnpm lint:client && pnpm lint:server",
+    "lint:client": "pnpm --filter client lint",
+    "lint:server": "pnpm --filter server lint"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"
