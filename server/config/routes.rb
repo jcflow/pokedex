@@ -10,6 +10,7 @@ Rails.application.routes.draw do
     post "/login", to: "sessions#create"
     post "/logout", to: "sessions#destroy"
     get "/session", to: "sessions#show"
+    resources :pokemons, only: [ :index, :show ]
   end
 
   # Defines the root path route ("/")
