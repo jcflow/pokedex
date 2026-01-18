@@ -1,0 +1,10 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "bin/rails server -p 3001",
+    "test": "bundle exec rspec",
+    "lint": "bundle exec rubocop"
+  }
+}
