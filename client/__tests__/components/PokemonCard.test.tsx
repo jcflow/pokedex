@@ -64,4 +64,22 @@ describe('PokemonCard', () => {
     render(<PokemonCard pokemon={threeDigitPokemon} />)
     expect(screen.getByText('#150')).toBeInTheDocument()
   })
+
+  it('links to Pokemon detail page', () => {
+    render(<PokemonCard pokemon={mockPokemon} />)
+    const link = screen.getByRole('link')
+    expect(link).toHaveAttribute('href', '/pokemon/25')
+  })
+
+  it('has accessible aria-label for detail link', () => {
+    render(<PokemonCard pokemon={mockPokemon} />)
+    const link = screen.getByLabelText('View details for Pikachu')
+    expect(link).toBeInTheDocument()
+  })
+
+  it('is keyboard accessible with focus styles', () => {
+    render(<PokemonCard pokemon={mockPokemon} />)
+    const link = screen.getByRole('link')
+    expect(link).toHaveClass('focus:outline-none', 'focus:ring-2')
+  })
 })

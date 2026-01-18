@@ -34,3 +34,50 @@ export interface PokemonListResponse {
     url: string
   }>
 }
+
+/**
+ * Detailed Pokemon data from API
+ */
+export interface PokemonDetail {
+  /** Pokemon ID from PokeAPI */
+  id: number
+  /** Pokemon name */
+  name: string
+  /** Pokemon Pokedex number */
+  order: number
+  /** Pokemon height in decimeters */
+  height: number
+  /** Pokemon weight in hectograms */
+  weight: number
+  /** URL to default front sprite image */
+  sprite: string
+  /** List of Pokemon abilities */
+  abilities: Array<{
+    /** Ability name */
+    name: string
+    /** Whether this is a hidden ability */
+    is_hidden: boolean
+  }>
+  /** List of Pokemon moves (limited to first 20) */
+  moves: Array<{
+    /** Move name */
+    name: string
+  }>
+  /** List of Pokemon forms */
+  forms: Array<{
+    /** Form name */
+    name: string
+  }>
+  /** List of Pokemon types */
+  types: Array<{
+    /** Type name (e.g., fire, water, grass) */
+    name: string
+  }>
+  /** Pokemon stats */
+  stats: Array<{
+    /** Stat name (e.g., hp, attack, defense) */
+    name: string
+    /** Base stat value */
+    base_stat: number
+  }>
+}

@@ -1,5 +1,5 @@
 import type { LoginResponse, ErrorResponse } from '@/types/auth'
-import type { PokemonListResponse } from '@/types/pokemon'
+import type { PokemonListResponse, PokemonDetail } from '@/types/pokemon'
 import { TOKEN_KEY } from './constants'
 import { saveToken, getToken, removeToken } from './actions'
 
@@ -201,6 +201,52 @@ export async function fetchPokemons(
         throw new ApiError('Not authenticated', 401)
       }
       throw new ApiError('Failed to fetch Pokemon', response.status)
+    }
+
+    return await response.json()
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw error
+    }
+
+    throw new ApiError(
+      error instanceof Error ? error.message : 'Network error',
+      0
+    )
+  }
+}
+
+/**
+ * Fetch detailed Pokemon data by ID
+ *
+ * @param id - Pokemon ID or name
+ * @returns Promise resolving to PokemonDetail
+ * @throws {ApiError} When API call fails or Pokemon not found
+ *
+ * @example
+ * ```ts
+ * const pokemon = await fetchPokemonDetail(25) // Pikachu
+ * console.log('Name:', pokemon.name)
+ * console.log('Abilities:', pokemon.abilities)
+ * ```
+ */
+export async function fetchPokemonDetail(
+  id: string | number
+): Promise<PokemonDetail> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/pokemons/${id}`, {
+      headers: await getAuthHeaders(),
+      credentials: 'include',
+    })
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new ApiError('Not authenticated', 401)
+      }
+      if (response.status === 404) {
+        throw new ApiError('Pokemon not found', 404)
+      }
+      throw new ApiError('Failed to fetch Pokemon details', response.status)
     }
 
     return await response.json()

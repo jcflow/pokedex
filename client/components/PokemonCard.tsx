@@ -1,4 +1,5 @@
 import Image from 'next/image'
+import Link from 'next/link'
 import type { Pokemon } from '@/types/pokemon'
 
 /**
@@ -14,6 +15,7 @@ export interface PokemonCardProps {
  *
  * Displays individual Pokemon with image, name, and number.
  * Uses TailwindCSS for styling and includes proper accessibility attributes.
+ * Links to the Pokemon detail page when clicked.
  *
  * @param props - Component props
  * @returns Pokemon card element
@@ -27,7 +29,11 @@ export default function PokemonCard({ pokemon }: PokemonCardProps) {
   const formattedNumber = `#${pokemon.number.toString().padStart(3, '0')}`
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow">
+    <Link
+      href={`/pokemon/${pokemon.id}`}
+      aria-label={`View details for ${capitalizedName}`}
+      className="block bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+    >
       <Image
         src={pokemon.sprite}
         alt={`${capitalizedName} sprite`}
@@ -40,6 +46,6 @@ export default function PokemonCard({ pokemon }: PokemonCardProps) {
         <p className="text-sm text-gray-500 font-medium">{formattedNumber}</p>
         <h3 className="text-lg font-bold text-gray-900">{capitalizedName}</h3>
       </div>
-    </div>
+    </Link>
   )
 }
