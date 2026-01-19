@@ -34,8 +34,8 @@ The goal is to provide a reference implementation of a Clean Architecture, where
 
 ```mermaid
 graph TD
-    User[User / Browser] -->|HTTPS:3000| FE[Next.js App Router (SSR/Client)]
-    FE -->|API Requests (Axios)| BE[Rails 8 API (Proxy)]
+    User[User / Browser] -->|HTTPS:3000| FE[Next.js App Router - SSR Client]
+    FE -->|API Requests - Axios| BE[Rails 8 API - Proxy]
     
     subgraph "Backend Layer :3001"
         BE -->|Auth/Session| DB[(SQLite: User Data)]
@@ -91,21 +91,21 @@ server/
 
 ## Features & Technical Highlights
 
-### 🔐 Enterprise-Grade Security
+### Enterprise-Grade Security
 *   **HttpOnly Cookies**: I rejected `localStorage` for session management. Tokens are stored in **Secure, HttpOnly, SameSite** cookies to strictly prevent XSS attacks.
 *   **CSRF Protection**: Rails API enforces origin checks to prevent cross-site request forgery.
 
-### ⚡ Performance & Scalability
+### Performance & Scalability
 *   **Server-Side Rendering (SSR)**: Leveraging **Next.js 16 App Router**, pages are pre-rendered on the server for instant First Contentful Paint (FCP) and superior SEO.
 *   **Smart Caching Proxy**: The Ruby on Rails backend implements a **Cache-Aside pattern** using **Solid Cache**. It alleviates pressure on the generic PokeAPI (handling rate limits) and delivers sub-50ms response times for cached items.
 *   **Server-Side Pagination**: Efficiently handles large datasets by fetching only what is needed, reducing payload size and memory usage on the client.
 
-### ♿ Accessibility & UX
+### Accessibility & UX
 *   **A11y First**: Built with semantic HTML (`<main>`, `<article>`) and full keyboard interactions (Tab/Enter/Space), verified by `jest-axe`.
 *   **Responsive Design**: A **Mobile-First** approach using Tailwind CSS 4 ensures a native-app-like experience on phones while scaling beautifully to desktops.
 *   **Instant Feedback**: **Optimistic UI** patterns and generic skeleton loaders provide a perceived latency of near zero during data fetching.
 
-### 🛠️ Developer Experience (DX)
+### Developer Experience (DX)
 *   **Type Safety**: End-to-end **TypeScript** on the client and strictly typed Service Objects on the server reduce runtime errors.
 *   **Clean Architecture**: Strict separation of Client State (Zustand) vs Server State (TanStack Query) prevents "Spaghetti Code" and makes the codebase highly testable.
 
