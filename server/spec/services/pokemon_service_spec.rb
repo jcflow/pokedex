@@ -265,14 +265,14 @@ RSpec.describe PokemonService do
         result = service.fetch_list(page: 1, limit: 20, sort: 'number')
 
         numbers = result['results'].map { |p| p['number'] }
-        expect(numbers).to eq([1, 4, 63])
+        expect(numbers).to eq([ 1, 4, 63 ])
       end
 
       it 'defaults to number sort for invalid sort value' do
         result = service.fetch_list(page: 1, limit: 20, sort: 'invalid')
 
         numbers = result['results'].map { |p| p['number'] }
-        expect(numbers).to eq([1, 4, 63])
+        expect(numbers).to eq([ 1, 4, 63 ])
       end
 
       it 'adds number field to results' do

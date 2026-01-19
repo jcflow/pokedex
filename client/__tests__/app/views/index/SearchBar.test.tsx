@@ -25,6 +25,7 @@ describe('SearchBar', () => {
     })
 
     it('should have no accessibility violations', async () => {
+        jest.useRealTimers()
         const { container } = render(<SearchBar />)
         const results = await axe(container)
         expect(results).toHaveNoViolations()

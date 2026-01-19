@@ -15,6 +15,16 @@ jest.mock('@/app/views/index/SortButton', () => {
     }
 })
 
+jest.mock('next/navigation', () => ({
+    useRouter: () => ({
+        push: jest.fn(),
+    }),
+}))
+
+jest.mock('@/lib/api', () => ({
+    logout: jest.fn(),
+}))
+
 describe('PokemonHeader', () => {
     it('renders header elements', () => {
         render(<PokemonHeader />)

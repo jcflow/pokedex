@@ -255,7 +255,7 @@ RSpec.describe 'Api::Pokemons', type: :request do
         json = JSON.parse(response.body)
 
         numbers = json['results'].map { |p| p['number'] }
-        expect(numbers).to eq([1, 4, 63])
+        expect(numbers).to eq([ 1, 4, 63 ])
       end
 
       it 'defaults to number sort when sort param is invalid' do
@@ -263,7 +263,7 @@ RSpec.describe 'Api::Pokemons', type: :request do
         json = JSON.parse(response.body)
 
         numbers = json['results'].map { |p| p['number'] }
-        expect(numbers).to eq([1, 4, 63])
+        expect(numbers).to eq([ 1, 4, 63 ])
       end
     end
 
