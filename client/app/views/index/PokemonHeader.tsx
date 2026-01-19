@@ -1,3 +1,5 @@
+'use client'
+
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import SearchBar from './SearchBar'
@@ -50,7 +52,7 @@ export default function PokemonHeader() {
                     <button
                         onClick={handleLogout}
                         disabled={isLoggingOut}
-                        className="text-white font-bold text-sm bg-white/20 hover:bg-white/30 px-4 py-2 rounded-full transition-colors disabled:opacity-50"
+                        className="text-white font-bold text-sm bg-white/20 hover:bg-white/30 px-4 py-2 rounded-full transition-colors disabled:opacity-50 cursor-pointer"
                         aria-label="Logout"
                     >
                         {isLoggingOut ? '...' : 'LOGOUT'}
