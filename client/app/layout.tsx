@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
-import './globals.css'
-import { Providers } from './providers'
+import './assets/css/globals.css'
+import { Providers } from '@/store/providers'
 
 export const metadata: Metadata = {
   title: 'Pokédex',

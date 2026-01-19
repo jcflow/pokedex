@@ -13,7 +13,7 @@ export interface Pokemon {
   /** Pokemon Pokedex number */
   number: number
   /** URL to Pokemon sprite image */
-  sprite: string
+  sprite: string | null
 }
 
 /**
@@ -80,4 +80,14 @@ export interface PokemonDetail {
     /** Base stat value */
     base_stat: number
   }>
+  /** Pokemon description */
+  description?: string
+  /** Pokemon sprites */
+  sprites: {
+    other: {
+      'official-artwork': {
+        front_default: string
+      }
+    }
+  }
 }

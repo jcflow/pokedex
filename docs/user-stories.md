@@ -1,6 +1,6 @@
 # User Stories - TDD Development Plan
 
-This document outlines the 10-step development plan for the Pokedex application following Test-Driven Development (TDD) principles.
+This document outlines the 11-step development plan for the Pokedex application following Test-Driven Development (TDD) principles.
 
 ---
 
@@ -465,9 +465,11 @@ As a user, I want to click on a Pokemon card to view detailed information includ
 
 ---
 
-## Step 8 - UI Polish and Accessibility Audit
+---
 
-As a user, I want the application to look professional, match the Figma design, and be fully accessible, so that I have a great user experience regardless of my abilities.
+## Step 8 - UI Polish
+
+As a user, I want the application to look professional and match the Figma design, so that I have a visually consistent and polished experience.
 
 ### Acceptance Criteria
 
@@ -501,7 +503,62 @@ As a user, I want the application to look professional, match the Figma design, 
   - 404 page has helpful message and link back to home
   - Network error page suggests retry action
 
-- **Accessibility (WCAG 2.1 AA Compliance)**
+- **Performance**
+  - Lighthouse score > 90 for Performance
+  - Lighthouse score > 90 for Best Practices
+  - Lighthouse score > 90 for SEO
+  - Images optimized (use Next.js Image component)
+  - Lazy loading for below-fold content
+
+- **Browser Testing**
+  - Works in Chrome, Firefox, Safari, Edge (latest versions)
+  - No console errors or warnings
+  - Graceful degradation for older browsers (optional)
+
+- **Animations (Optional)**
+  - Smooth transitions for page changes
+  - Hover animations on cards
+  - Loading animations
+  - Respect `prefers-reduced-motion` for users who prefer less motion
+
+- **Final Touches**
+  - Favicon added
+  - Page titles descriptive and unique per page
+  - Footer with credits (optional)
+
+### Technical Notes & TDD Focus
+
+**TDD Workflow:**
+1. Polish styles to match Figma
+2. Add loading and error states
+3. Create reusable UI components (LoadingSpinner, ErrorMessage, SkeletonCard)
+4. Optimize images with Next.js Image component
+5. Run Lighthouse audit for Performance/SEO/Best Practices
+6. Fix performance issues
+7. Test in multiple browsers
+8. Verify no console errors or warnings
+
+**Key Tools:**
+- Lighthouse for performance/SEO audit
+- Chrome DevTools for responsive testing
+- Browser console for error checking
+
+**Key Files to Update:**
+- `client/tailwind.config.ts` (finalize theme)
+- `client/app/globals.css` (global styles)
+- All component files (add loading/error states)
+- `client/public/favicon.ico`
+- `client/app/layout.tsx` (metadata)
+
+---
+
+## Step 9 - Accessibility Audit
+
+As a user with disabilities, I want the application to be fully accessible, so that I can use it effectively regardless of my abilities.
+
+### Acceptance Criteria
+
+- **WCAG 2.1 AA Compliance**
   - **Color Contrast**: All text meets 4.5:1 ratio (3:1 for large text)
   - **Keyboard Navigation**:
     - All interactive elements accessible via Tab key
@@ -526,34 +583,44 @@ As a user, I want the application to look professional, match the Figma design, 
     - Modal dialogs trap focus (if any modals)
     - Focus returns to trigger element after closing modals
 
-- **Performance**
-  - Lighthouse score > 90 for Performance
-  - Lighthouse score > 90 for Accessibility
-  - Lighthouse score > 90 for Best Practices
-  - Lighthouse score > 90 for SEO
-  - Images optimized (use Next.js Image component)
-  - Lazy loading for below-fold content
+- **Automated Accessibility Testing**
+  - jest-axe tests pass for all components
+  - Lighthouse Accessibility score > 90
+  - No critical or serious WAVE violations
 
-- **Browser Testing**
-  - Works in Chrome, Firefox, Safari, Edge (latest versions)
-  - No console errors or warnings
-  - Graceful degradation for older browsers (optional)
+- **Manual Accessibility Testing**
+  - Keyboard-only navigation verified for all flows
+  - Screen reader tested (VoiceOver on Mac or NVDA on Windows)
+  - Focus indicators visible throughout app
 
-- **Animations (Optional)**
-  - Smooth transitions for page changes
-  - Hover animations on cards
-  - Loading animations
-  - Respect `prefers-reduced-motion` for users who prefer less motion
+### Technical Notes & TDD Focus
 
-- **Final Touches**
-  - Favicon added
-  - Page titles descriptive and unique per page
-  - Footer with credits (optional)
-  - Logout confirmation (optional, nice to have)
+**TDD Workflow:**
+1. Install accessibility testing tools (jest-axe, @axe-core/react)
+2. Write accessibility tests in all component test files
+3. Run automated accessibility audit with jest-axe
+4. Test keyboard navigation manually
+5. Test screen reader compatibility manually
+6. Fix accessibility violations
+7. Run Lighthouse Accessibility audit
+8. Verify all scores > 90
+
+**Key Tools:**
+- jest-axe for automated accessibility testing
+- Lighthouse for accessibility scoring
+- WAVE browser extension for accessibility check
+- Chrome DevTools Accessibility tree
+- Keyboard-only navigation testing
+- VoiceOver/NVDA for screen reader testing
+
+**Key Files to Update:**
+- All component test files (add axe tests)
+- Components with ARIA violations (fix issues)
+- `client/app/layout.tsx` (skip link, landmarks)
 
 ---
 
-## Step 9 - Backend Search and Sort Implementation
+## Step 10 - Backend Search and Sort Implementation
 
 As a user, I want to search Pokemon by name server-side and have sorted results, so that I can efficiently find Pokemon across all pages.
 
@@ -615,7 +682,7 @@ As a user, I want to search Pokemon by name server-side and have sorted results,
 
 ---
 
-## Step 10 - End-to-End Testing and Final Integration
+## Step 11 - End-to-End Testing and Final Integration
 
 As a stakeholder, I want comprehensive end-to-end tests to ensure the entire application works correctly from login to browsing Pokemon, so that I can confidently present the project in the code review.
 
@@ -725,7 +792,7 @@ As a stakeholder, I want comprehensive end-to-end tests to ensure the entire app
 
 ## Summary
 
-This 10-step development plan provides a comprehensive, TDD-driven roadmap for building the Pokedex application. Each step includes:
+This 11-step development plan provides a comprehensive, TDD-driven roadmap for building the Pokedex application. Each step includes:
 - Clear user stories
 - Granular acceptance criteria covering happy paths, edge cases, and accessibility
 - Technical notes on TDD workflow
@@ -738,9 +805,10 @@ This 10-step development plan provides a comprehensive, TDD-driven roadmap for b
 5. ✅ Step 5: Main Dashboard (Frontend Display)
 6. ✅ Step 6: Pagination & Search (Frontend Features)
 7. ✅ Step 7: Detail View (Frontend Detail)
-8. ✅ Step 8: UI Polish & Accessibility (Frontend Quality)
-9. ✅ Step 9: Backend Search/Sort (Backend Enhancement)
-10. ✅ Step 10: E2E Testing (Integration Quality)
+8. Step 8: UI Polish (Frontend Visual Quality)
+9. Step 9: Accessibility Audit (Frontend Accessibility)
+10. Step 10: Backend Search/Sort (Backend Enhancement)
+11. Step 11: E2E Testing (Integration Quality)
 
 **Key Principles:**
 - Test-Driven Development (Red → Green → Refactor)

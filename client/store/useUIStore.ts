@@ -20,6 +20,11 @@ interface UIState {
   sortBy: SortBy
 
   /**
+   * Current active Page
+   */
+  currentPage: number
+
+  /**
    * Update the search term
    * @param term - The new search term
    */
@@ -30,6 +35,12 @@ interface UIState {
    * @param sort - The new sort criteria
    */
   setSortBy: (sort: SortBy) => void
+
+  /**
+   * Update the current page
+   * @param page - The new page number
+   */
+  setCurrentPage: (page: number) => void
 
   /**
    * Clear the search term
@@ -52,10 +63,13 @@ interface UIState {
 export const useUIStore = create<UIState>((set) => ({
   searchTerm: '',
   sortBy: 'number',
+  currentPage: 1,
 
   setSearchTerm: (term: string) => set({ searchTerm: term }),
 
   setSortBy: (sort: SortBy) => set({ sortBy: sort }),
+
+  setCurrentPage: (page: number) => set({ currentPage: page }),
 
   clearSearch: () => set({ searchTerm: '' }),
 }))
