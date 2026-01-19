@@ -1,10 +1,40 @@
+/**
+ * Props for FullPageLayout component
+ */
 interface FullPageLayoutProps {
-    header: React.ReactNode
-    children: React.ReactNode
-    maxWidth?: string
-    centerContent?: boolean
+  /** Header content (typically title, navigation, or branding) */
+  header: React.ReactNode
+  /** Main content rendered inside white card container */
+  children: React.ReactNode
+  /** Tailwind max-width class (default: 'max-w-7xl') */
+  maxWidth?: string
+  /** Whether to vertically center the content (default: false) */
+  centerContent?: boolean
 }
 
+/**
+ * FullPageLayout - Main application layout
+ *
+ * Provides a full-screen red background with:
+ * - Customizable header section
+ * - White rounded card container for main content
+ * - Responsive padding and max-width constraints
+ *
+ * Used for the main Pokemon list page and login page.
+ *
+ * @param props - Component props
+ * @returns Layout wrapper with header and content card
+ *
+ * @example
+ * ```tsx
+ * <FullPageLayout
+ *   header={<PokemonHeader />}
+ *   maxWidth="max-w-7xl"
+ * >
+ *   <PokemonList />
+ * </FullPageLayout>
+ * ```
+ */
 export default function FullPageLayout({
     header,
     children,

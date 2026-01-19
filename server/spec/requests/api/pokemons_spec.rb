@@ -146,6 +146,175 @@ RSpec.describe 'Api::Pokemons', type: :request do
         expect(json['error']).to include('PokeAPI')
       end
     end
+
+    context 'with search parameter' do
+      let(:headers) { auth_headers }
+      let(:mock_full_list_response) do
+        {
+          'count' => 5,
+          'next' => nil,
+          'previous' => nil,
+          'results' => [
+            { 'name' => 'pikachu', 'url' => 'https://pokeapi.co/api/v2/pokemon/25/' },
+            { 'name' => 'pichu', 'url' => 'https://pokeapi.co/api/v2/pokemon/172/' },
+            { 'name' => 'bulbasaur', 'url' => 'https://pokeapi.co/api/v2/pokemon/1/' },
+            { 'name' => 'charmander', 'url' => 'https://pokeapi.co/api/v2/pokemon/4/' },
+            { 'name' => 'charmeleon', 'url' => 'https://pokeapi.co/api/v2/pokemon/5/' }
+          ]
+        }
+      end
+
+      before do
+        stub_request(:get, "#{base_url}/pokemon?offset=0&limit=10000")
+          .to_return(
+            status: 200,
+            body: mock_full_list_response.to_json,
+            headers: { 'Content-Type' => 'application/json' }
+          )
+      end
+
+      it 'returns filtered results for search=pika' do
+        get '/api/pokemons', params: { search: 'pika' }, headers: headers
+        json = JSON.parse(response.body)
+
+        expect(response).to have_http_status(:ok)
+        expect(json['results'].size).to eq(1)
+        expect(json['results'].first['name']).to eq('pikachu')
+      end
+
+      it 'returns empty array for search=xyz' do
+        get '/api/pokemons', params: { search: 'xyz' }, headers: headers
+        json = JSON.parse(response.body)
+
+        expect(response).to have_http_status(:ok)
+        expect(json['results']).to eq([])
+        expect(json['total']).to eq(0)
+      end
+
+      it 'returns correct total and total_pages after filtering' do
+        get '/api/pokemons', params: { search: 'char', limit: 1 }, headers: headers
+        json = JSON.parse(response.body)
+
+        expect(json['total']).to eq(2)
+        expect(json['total_pages']).to eq(2)
+        expect(json['results'].size).to eq(1)
+      end
+
+      it 'performs case-insensitive search' do
+        get '/api/pokemons', params: { search: 'PIKA' }, headers: headers
+        json = JSON.parse(response.body)
+
+        expect(json['results'].size).to eq(1)
+        expect(json['results'].first['name']).to eq('pikachu')
+      end
+
+      it 'performs partial match search' do
+        get '/api/pokemons', params: { search: 'pi' }, headers: headers
+        json = JSON.parse(response.body)
+
+        expect(json['results'].size).to eq(2)
+        names = json['results'].map { |p| p['name'] }
+        expect(names).to contain_exactly('pikachu', 'pichu')
+      end
+    end
+
+    context 'with sort parameter' do
+      let(:headers) { auth_headers }
+      let(:mock_full_list_response) do
+        {
+          'count' => 3,
+          'next' => nil,
+          'previous' => nil,
+          'results' => [
+            { 'name' => 'bulbasaur', 'url' => 'https://pokeapi.co/api/v2/pokemon/1/' },
+            { 'name' => 'charmander', 'url' => 'https://pokeapi.co/api/v2/pokemon/4/' },
+            { 'name' => 'abra', 'url' => 'https://pokeapi.co/api/v2/pokemon/63/' }
+          ]
+        }
+      end
+
+      before do
+        stub_request(:get, "#{base_url}/pokemon?offset=0&limit=10000")
+          .to_return(
+            status: 200,
+            body: mock_full_list_response.to_json,
+            headers: { 'Content-Type' => 'application/json' }
+          )
+      end
+
+      it 'returns alphabetically sorted results for sort=name' do
+        get '/api/pokemons', params: { sort: 'name' }, headers: headers
+        json = JSON.parse(response.body)
+
+        names = json['results'].map { |p| p['name'] }
+        expect(names).to eq(%w[abra bulbasaur charmander])
+      end
+
+      it 'returns numerically sorted results for sort=number' do
+        get '/api/pokemons', params: { sort: 'number' }, headers: headers
+        json = JSON.parse(response.body)
+
+        numbers = json['results'].map { |p| p['number'] }
+        expect(numbers).to eq([1, 4, 63])
+      end
+
+      it 'defaults to number sort when sort param is invalid' do
+        get '/api/pokemons', params: { sort: 'invalid' }, headers: headers
+        json = JSON.parse(response.body)
+
+        numbers = json['results'].map { |p| p['number'] }
+        expect(numbers).to eq([1, 4, 63])
+      end
+    end
+
+    context 'with combined search, sort, and pagination' do
+      let(:headers) { auth_headers }
+      let(:mock_full_list_response) do
+        {
+          'count' => 5,
+          'next' => nil,
+          'previous' => nil,
+          'results' => [
+            { 'name' => 'charmander', 'url' => 'https://pokeapi.co/api/v2/pokemon/4/' },
+            { 'name' => 'charmeleon', 'url' => 'https://pokeapi.co/api/v2/pokemon/5/' },
+            { 'name' => 'charizard', 'url' => 'https://pokeapi.co/api/v2/pokemon/6/' },
+            { 'name' => 'pikachu', 'url' => 'https://pokeapi.co/api/v2/pokemon/25/' },
+            { 'name' => 'bulbasaur', 'url' => 'https://pokeapi.co/api/v2/pokemon/1/' }
+          ]
+        }
+      end
+
+      before do
+        stub_request(:get, "#{base_url}/pokemon?offset=0&limit=10000")
+          .to_return(
+            status: 200,
+            body: mock_full_list_response.to_json,
+            headers: { 'Content-Type' => 'application/json' }
+          )
+      end
+
+      it 'combines search, sort by name, and pagination' do
+        get '/api/pokemons', params: { search: 'char', sort: 'name', page: 1, limit: 2 }, headers: headers
+        json = JSON.parse(response.body)
+
+        expect(json['total']).to eq(3)
+        expect(json['total_pages']).to eq(2)
+        expect(json['page']).to eq(1)
+        expect(json['results'].size).to eq(2)
+        names = json['results'].map { |p| p['name'] }
+        # Alphabetical order: charizard < charmander < charmeleon
+        expect(names).to eq(%w[charizard charmander])
+      end
+
+      it 'returns correct second page with combined filters' do
+        get '/api/pokemons', params: { search: 'char', sort: 'name', page: 2, limit: 2 }, headers: headers
+        json = JSON.parse(response.body)
+
+        expect(json['page']).to eq(2)
+        expect(json['results'].size).to eq(1)
+        expect(json['results'].first['name']).to eq('charmeleon')
+      end
+    end
   end
 
   describe 'GET /api/pokemons/:id' do

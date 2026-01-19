@@ -1,4 +1,5 @@
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
+import { axe } from 'jest-axe'
 import Pagination from '@/app/views/index/Pagination'
 import { useRouter, useSearchParams } from 'next/navigation'
 
@@ -40,7 +41,13 @@ describe('Pagination', () => {
         expect(prevLink).toHaveClass('pointer-events-none')
     })
 
-    it('navigates correctly', () => {
+    it('should have no accessibility violations', async () => {
+        const { container } = render(<Pagination currentPage={1} totalPages={10} />)
+        const results = await axe(container)
+        expect(results).toHaveNoViolations()
+    })
+
+    it('renders pagination correctly', () => {
         render(<Pagination currentPage={1} totalPages={10} />)
         const page2 = screen.getByRole('link', { name: /^Page 2$/i })
         expect(page2).toHaveAttribute('href', '/?page=2')

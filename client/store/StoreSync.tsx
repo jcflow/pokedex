@@ -3,92 +3,123 @@
 import { useEffect, useRef } from 'react'
 import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import { useUIStore, type SortBy } from '@/store/useUIStore'
+import { TIMING } from '@/lib/constants'
 
+/** Default sort option - omitted from URL for cleaner URLs */
+const DEFAULT_SORT: SortBy = 'number'
+
+/**
+ * StoreSync component
+ *
+ * Bidirectional sync between URL query params and Zustand store.
+ * Handles two sync directions:
+ * 1. URL → Store: On mount and browser navigation (back/forward)
+ * 2. Store → URL: When user interacts with search/sort controls
+ *
+ * Uses debouncing to prevent excessive URL updates during typing.
+ *
+ * @returns null (invisible sync component)
+ */
 export default function StoreSync() {
-    const router = useRouter()
-    const pathname = usePathname()
-    const searchParams = useSearchParams()
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
 
-    const { searchTerm, sortBy, currentPage, setSearchTerm, setSortBy, setCurrentPage } = useUIStore()
+  const {
+    searchTerm,
+    sortBy,
+    currentPage,
+    setSearchTerm,
+    setSortBy,
+    setCurrentPage,
+  } = useUIStore()
 
-    // Track initial hydration to avoid overwriting URL on first render
-    const isHydrated = useRef(false)
-    const prevSearch = useRef(searchTerm)
-    const prevSort = useRef(sortBy)
-    const prevPage = useRef(currentPage)
+  // Track hydration state to prevent overwriting URL on initial render
+  const isHydrated = useRef(false)
+  const prevSearch = useRef(searchTerm)
+  const prevSort = useRef(sortBy)
 
-    // 1. Sync URL -> Store (On Mount/Popstate)
-    useEffect(() => {
-        const urlSearch = searchParams.get('search') || ''
-        const urlSort = (searchParams.get('sort') as SortBy) || 'number'
-        const urlPage = Number(searchParams.get('page')) || 1
+  /**
+   * Effect 1: Sync URL → Store
+   *
+   * Runs on mount and when searchParams change (browser back/forward).
+   * Updates store to match URL state.
+   */
+  useEffect(() => {
+    const urlSearch = searchParams.get('search') || ''
+    const urlSort = (searchParams.get('sort') as SortBy) || DEFAULT_SORT
+    const urlPage = Number(searchParams.get('page')) || 1
 
-        // Only update store if values differ, to avoid infinite loops if store updates trigger URL updates
-        if (urlSearch !== searchTerm) {
-            setSearchTerm(urlSearch)
-        }
+    // Only update store if values differ to avoid infinite loops
+    if (urlSearch !== searchTerm) {
+      setSearchTerm(urlSearch)
+    }
 
-        if (urlSort !== sortBy) {
-            setSortBy(urlSort)
-        }
+    if (urlSort !== sortBy) {
+      setSortBy(urlSort)
+    }
 
-        if (urlPage !== currentPage) {
-            setCurrentPage(urlPage)
-        }
+    if (urlPage !== currentPage) {
+      setCurrentPage(urlPage)
+    }
 
-        prevSearch.current = urlSearch
-        prevSort.current = urlSort
-        isHydrated.current = true
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [searchParams]) // Depend on searchParams to catch browser nav (back/forward)
+    prevSearch.current = urlSearch
+    prevSort.current = urlSort
+    isHydrated.current = true
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]) // Depend on searchParams to catch browser navigation
 
-    // 2. Sync Store -> URL (On Change)
-    useEffect(() => {
-        if (!isHydrated.current) return
+  /**
+   * Effect 2: Sync Store → URL
+   *
+   * Runs when store values change (user interaction).
+   * Debounced to prevent history spam during typing.
+   */
+  useEffect(() => {
+    if (!isHydrated.current) return
 
-        // Debounce search update to avoid massive history spam
-        const timeoutId = setTimeout(() => {
-            // Check if actually changed to prevent redundant pushes
-            if (searchTerm === prevSearch.current && sortBy === prevSort.current) {
-                return
-            }
+    const timeoutId = setTimeout(() => {
+      // Skip if nothing actually changed
+      if (
+        searchTerm === prevSearch.current &&
+        sortBy === prevSort.current
+      ) {
+        return
+      }
 
-            const params = new URLSearchParams(searchParams.toString())
+      const params = new URLSearchParams(searchParams.toString())
 
-            // Update Search
-            if (searchTerm) {
-                params.set('search', searchTerm)
-            } else {
-                params.delete('search')
-            }
+      // Update search param
+      if (searchTerm) {
+        params.set('search', searchTerm)
+      } else {
+        params.delete('search')
+      }
 
-            // Update Sort
-            if (sortBy && sortBy !== 'number') { // Default is number, keep URL clean? Or persistent? User said persist.
-                params.set('sort', sortBy)
-            } else {
-                // Optionally keep 'sort=number' explicitly or remove if default. 
-                // Let's set it if it's explicitly 'number' to be safe, or remove if we consider it default.
-                // Given requirements, let's keep it explicit if it was set, or just set it.
-                if (sortBy === 'number') params.delete('sort')
-                // Edit: If user wants "persist", maybe explicit is better. 
-                // But usually default is omitted. I'll omit default "number" to keep URL clean.
-            }
+      // Update sort param (omit default value to keep URL clean)
+      if (sortBy && sortBy !== DEFAULT_SORT) {
+        params.set('sort', sortBy)
+      } else {
+        params.delete('sort')
+      }
 
-            // Reset Pagination on filter change
-            if (searchTerm !== prevSearch.current || sortBy !== prevSort.current) {
-                params.delete('page') // Resets to page 1
-            }
+      // Reset pagination when filters change
+      if (
+        searchTerm !== prevSearch.current ||
+        sortBy !== prevSort.current
+      ) {
+        params.delete('page')
+      }
 
-            prevSearch.current = searchTerm
-            prevSort.current = sortBy
+      prevSearch.current = searchTerm
+      prevSort.current = sortBy
 
-            router.replace(`${pathname}?${params.toString()}`, { scroll: false })
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false })
+    }, TIMING.URL_SYNC_DEBOUNCE_MS)
 
-        }, 300) // 300ms debounce for search
+    return () => clearTimeout(timeoutId)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchTerm, sortBy, pathname, router]) // Intentionally omit searchParams to avoid sync loop
 
-        return () => clearTimeout(timeoutId)
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [searchTerm, sortBy, pathname, router]) // Intentionally omit searchParams to avoid loop, we build FROM current params but triggers on store change
-
-    return null
+  return null
 }

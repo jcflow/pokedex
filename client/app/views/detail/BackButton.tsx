@@ -1,15 +1,38 @@
 'use client'
 
+import { useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import backIcon from '@/icons/back.svg'
 import { useUIStore } from '@/store/useUIStore'
-import { useCallback } from 'react'
 
+/**
+ * BackButton - Navigation button to return to Pokemon list
+ *
+ * Navigates back to the main Pokemon list while preserving the user's
+ * previous search, sort, and pagination state. This ensures a seamless
+ * browsing experience when returning from a detail page.
+ *
+ * State preserved:
+ * - Search term (if any)
+ * - Sort preference (name/number)
+ * - Current page number
+ *
+ * @returns Back navigation button with arrow icon
+ *
+ * @example
+ * ```tsx
+ * <BackButton />
+ * ```
+ */
 export default function BackButton() {
     const router = useRouter()
     const { searchTerm, sortBy, currentPage } = useUIStore()
 
+    /**
+     * Navigates back to main list with preserved filter state.
+     * Constructs URL params from current store values.
+     */
     const handleBack = useCallback(() => {
         const params = new URLSearchParams()
         if (searchTerm) params.set('search', searchTerm)

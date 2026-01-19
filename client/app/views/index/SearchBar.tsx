@@ -1,7 +1,8 @@
 'use client'
 
+import { useCallback, useEffect, useRef, useState, memo } from 'react'
 import { useUIStore } from '@/store/useUIStore'
-import { useEffect, useState } from 'react'
+import { TIMING } from '@/lib/constants'
 
 /**
  * SearchBar component
@@ -17,28 +18,36 @@ import { useEffect, useState } from 'react'
  * <SearchBar />
  * ```
  */
-export default function SearchBar() {
+function SearchBar() {
   const { searchTerm, setSearchTerm, clearSearch } = useUIStore()
   const [localValue, setLocalValue] = useState(searchTerm)
+  const prevSearchTerm = useRef(searchTerm)
 
-  // Sync local value with store when store changes externally
-  useEffect(() => {
-    setLocalValue(searchTerm)
-  }, [searchTerm])
+  // Sync local value with store when store changes externally (e.g., URL navigation)
+  // Using ref comparison to avoid triggering on every render
+  if (searchTerm !== prevSearchTerm.current) {
+    prevSearchTerm.current = searchTerm
+    if (searchTerm !== localValue) {
+      setLocalValue(searchTerm)
+    }
+  }
 
-  // Update store when local value changes (debounced)
+  // Update store when local value changes (debounced to prevent excessive updates)
   useEffect(() => {
     const timer = setTimeout(() => {
       setSearchTerm(localValue)
-    }, 300)
+    }, TIMING.SEARCH_DEBOUNCE_MS)
 
     return () => clearTimeout(timer)
   }, [localValue, setSearchTerm])
 
-  const handleClear = () => {
+  /**
+   * Clears the search input and resets store state
+   */
+  const handleClear = useCallback(() => {
     setLocalValue('')
     clearSearch()
-  }
+  }, [clearSearch])
 
   return (
     <div className="relative w-full">
@@ -97,3 +106,5 @@ export default function SearchBar() {
     </div>
   )
 }
+
+export default memo(SearchBar)

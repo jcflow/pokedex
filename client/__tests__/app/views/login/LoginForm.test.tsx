@@ -1,4 +1,5 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
+import { axe } from 'jest-axe'
 import LoginForm from '@/app/views/login/LoginForm'
 import { login, ApiError } from '@/lib/api'
 
@@ -30,6 +31,12 @@ describe('LoginForm', () => {
             configurable: true,
             value: originalLocation,
         })
+    })
+
+    it('should have no accessibility violations', async () => {
+        const { container } = render(<LoginForm />)
+        const results = await axe(container)
+        expect(results).toHaveNoViolations()
     })
 
     it('renders login form correctly', () => {
@@ -115,7 +122,7 @@ describe('LoginForm', () => {
         fireEvent.click(submitButton)
 
         expect(submitButton).toBeDisabled()
-        expect(screen.getByText('LOGIN...')).toBeInTheDocument()
+        expect(screen.getByRole('status', { name: /loading/i })).toBeInTheDocument()
         expect(screen.getByLabelText(/username/i)).toBeDisabled()
 
         // Resolve to clean up

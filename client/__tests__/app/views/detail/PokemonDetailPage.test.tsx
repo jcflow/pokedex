@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react'
+import { axe } from 'jest-axe'
 import PokemonDetailPage from '@/app/views/detail/index'
 import { fetchPokemonDetail } from '@/lib/api'
 
@@ -45,6 +46,14 @@ const mockPokemon = {
 describe('PokemonDetailPage', () => {
     beforeEach(() => {
         jest.clearAllMocks()
+    })
+
+    it('should have no accessibility violations', async () => {
+        (fetchPokemonDetail as jest.Mock).mockResolvedValue(mockPokemon)
+        const jsx = await PokemonDetailPage({ params: Promise.resolve({ id: '1' }) })
+        const { container } = render(jsx)
+        const results = await axe(container)
+        expect(results).toHaveNoViolations()
     })
 
     it('renders pokemon details correctly', async () => {

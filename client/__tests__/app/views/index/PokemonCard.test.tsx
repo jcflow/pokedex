@@ -1,4 +1,5 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
+import { axe } from 'jest-axe'
 import PokemonCard from '@/app/views/index/PokemonCard'
 
 // Mock Card since we tested it separately
@@ -22,7 +23,13 @@ describe('PokemonCard (View)', () => {
         sprite: 'pikachu.png'
     }
 
-    it('formats data correctly for Card', () => {
+    it('should have no accessibility violations', async () => {
+        const { container } = render(<PokemonCard pokemon={mockPokemon} />)
+        const results = await axe(container)
+        expect(results).toHaveNoViolations()
+    })
+
+    it('renders pokemon name and number correctly', () => {
         render(<PokemonCard pokemon={mockPokemon} />)
 
         expect(screen.getByText('Pikachu')).toBeInTheDocument() // Capitalized name

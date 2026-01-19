@@ -1,10 +1,19 @@
 'use client'
 
+import { useCallback, memo } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import navLeft from '@/icons/nav-left.svg'
 import navRight from '@/icons/nav-right.svg'
+import { PAGINATION_CONFIG } from '@/lib/constants'
+
+/**
+ * Represents a pagination item - either a page number or an ellipsis
+ */
+type PaginationItem =
+  | { type: 'page'; value: number }
+  | { type: 'ellipsis'; key: string }
 
 /**
  * Props for Pagination component
@@ -27,40 +36,48 @@ interface PaginationProps {
 }
 
 /**
- * Generate array of page numbers to display with ellipsis for large ranges
+ * Generate array of pagination items with ellipsis for large ranges.
  *
- * @param current - Current page number
+ * Algorithm:
+ * - Shows first page, last page, current page, and SIBLING_PAGES around current
+ * - Uses ellipsis when there are gaps larger than 1 page
+ *
+ * @param current - Current page number (1-indexed)
  * @param total - Total number of pages
- * @returns Array of page numbers and ellipsis markers
+ * @returns Array of pagination items (page numbers or ellipsis markers)
+ *
+ * @example
+ * getPageItems(5, 10) // [1, '...', 4, 5, 6, '...', 10]
+ * getPageItems(1, 5)  // [1, 2, 3, 4, 5]
  */
-function getPageNumbers(current: number, total: number): (number | string | null)[] {
-  if (total <= 7) {
-    // Show all pages if total is small
-    return Array.from({ length: total }, (_, i) => i + 1)
+function getPageItems(current: number, total: number): PaginationItem[] {
+  if (total <= PAGINATION_CONFIG.MAX_VISIBLE_PAGES) {
+    return Array.from({ length: total }, (_, i) => ({
+      type: 'page' as const,
+      value: i + 1,
+    }))
   }
 
-  // Always show first page, last page, current page, and 2 pages around current
-  const pages: (number | string | null)[] = [1]
+  const items: PaginationItem[] = [{ type: 'page', value: 1 }]
 
-  if (current > 3) {
-    pages.push(null)
+  if (current > PAGINATION_CONFIG.LEFT_ELLIPSIS_THRESHOLD) {
+    items.push({ type: 'ellipsis', key: 'left' })
   }
 
-  // Pages around current
-  const start = Math.max(2, current - 1)
-  const end = Math.min(total - 1, current + 1)
+  const start = Math.max(2, current - PAGINATION_CONFIG.SIBLING_PAGES)
+  const end = Math.min(total - 1, current + PAGINATION_CONFIG.SIBLING_PAGES)
 
   for (let i = start; i <= end; i++) {
-    pages.push(i)
+    items.push({ type: 'page', value: i })
   }
 
-  if (current < total - 2) {
-    pages.push(null)
+  if (current < total - PAGINATION_CONFIG.RIGHT_ELLIPSIS_THRESHOLD) {
+    items.push({ type: 'ellipsis', key: 'right' })
   }
 
-  pages.push(total)
+  items.push({ type: 'page', value: total })
 
-  return pages
+  return items
 }
 
 /**
@@ -77,34 +94,44 @@ function getPageNumbers(current: number, total: number): (number | string | null
  * <Pagination currentPage={3} totalPages={10} />
  * ```
  */
-export default function Pagination({
+function Pagination({
   currentPage,
   totalPages,
   basePath = '/',
 }: PaginationProps) {
   const searchParams = useSearchParams()
-  const pages = getPageNumbers(currentPage, totalPages)
+  const items = getPageItems(currentPage, totalPages)
   const hasPrevious = currentPage > 1
   const hasNext = currentPage < totalPages
 
-  // Helper to create URL with existing params
-  const createPageUrl = (page: number) => {
-    const params = new URLSearchParams(searchParams.toString())
-    params.set('page', page.toString())
-    return `${basePath}?${params.toString()}`
-  }
+  /**
+   * Creates a URL for a specific page, preserving existing query params
+   */
+  const createPageUrl = useCallback(
+    (page: number): string => {
+      const params = new URLSearchParams(searchParams.toString())
+      params.set('page', page.toString())
+      return `${basePath}?${params.toString()}`
+    },
+    [searchParams, basePath]
+  )
 
   return (
-    <nav role="navigation" aria-label="Pagination navigation" className="flex justify-center items-center gap-2 mt-8">
+    <nav
+      role="navigation"
+      aria-label="Pagination navigation"
+      className="flex justify-center items-center gap-2 mt-8"
+    >
       {/* Previous Button */}
       <Link
         href={hasPrevious ? createPageUrl(currentPage - 1) : '#'}
         aria-label="Previous page"
         aria-disabled={!hasPrevious}
-        className={`w-10 h-10 flex items-center justify-center rounded-full shadow-inner transition-colors ${hasPrevious
-          ? 'bg-white hover:bg-gray-50'
-          : 'bg-white/50 cursor-not-allowed pointer-events-none opacity-50'
-          }`}
+        className={`w-10 h-10 flex items-center justify-center rounded-full shadow-inner transition-colors ${
+          hasPrevious
+            ? 'bg-white hover:bg-gray-50'
+            : 'bg-white/50 cursor-not-allowed pointer-events-none opacity-50'
+        }`}
       >
         <Image
           src={navLeft}
@@ -117,12 +144,13 @@ export default function Pagination({
 
       {/* Page Numbers */}
       <div className="flex gap-2">
-        {pages.map((page, index) => {
-          if (!page) {
+        {items.map((item) => {
+          if (item.type === 'ellipsis') {
             return (
               <span
-                key={`ellipsis-${index}`}
+                key={item.key}
                 className="w-10 h-10 flex items-center justify-center text-gray-400"
+                role="presentation"
                 aria-hidden="true"
               >
                 ...
@@ -130,21 +158,21 @@ export default function Pagination({
             )
           }
 
-          const pageNum = page as number
-          const isCurrentPage = pageNum === currentPage
+          const isCurrentPage = item.value === currentPage
 
           return (
             <Link
-              key={pageNum}
-              href={createPageUrl(pageNum)}
-              aria-label={`Page ${pageNum}`}
+              key={item.value}
+              href={createPageUrl(item.value)}
+              aria-label={`Page ${item.value}`}
               aria-current={isCurrentPage ? 'page' : undefined}
-              className={`w-10 h-10 flex items-center justify-center rounded-full shadow-inner transition-colors ${isCurrentPage
-                ? 'bg-white primary-text ring-2 ring-[var(--primary-red)] text-lg'
-                : 'bg-white text-gray-600 hover:text-[var(--primary-red)]'
-                }`}
+              className={`w-10 h-10 flex items-center justify-center rounded-full shadow-inner transition-colors ${
+                isCurrentPage
+                  ? 'bg-white primary-text ring-2 ring-[var(--primary-red)] text-lg'
+                  : 'bg-white text-gray-600 hover:text-[var(--primary-red)]'
+              }`}
             >
-              {pageNum}
+              {item.value}
             </Link>
           )
         })}
@@ -155,10 +183,11 @@ export default function Pagination({
         href={hasNext ? createPageUrl(currentPage + 1) : '#'}
         aria-label="Next page"
         aria-disabled={!hasNext}
-        className={`w-10 h-10 flex items-center justify-center rounded-full shadow-inner transition-colors ${hasNext
-          ? 'bg-white hover:bg-gray-50'
-          : 'bg-white/50 cursor-not-allowed pointer-events-none opacity-50'
-          }`}
+        className={`w-10 h-10 flex items-center justify-center rounded-full shadow-inner transition-colors ${
+          hasNext
+            ? 'bg-white hover:bg-gray-50'
+            : 'bg-white/50 cursor-not-allowed pointer-events-none opacity-50'
+        }`}
       >
         <Image
           src={navRight}
@@ -171,3 +200,5 @@ export default function Pagination({
     </nav>
   )
 }
+
+export default memo(Pagination)

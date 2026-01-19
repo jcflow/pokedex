@@ -34,7 +34,12 @@ describe('IndexPage', () => {
         const jsx = await IndexPage({ searchParams: Promise.resolve({}) })
         render(jsx)
 
-        expect(fetchPokemons).toHaveBeenCalledWith(1, 20)
+        expect(fetchPokemons).toHaveBeenCalledWith({
+            page: 1,
+            limit: 20,
+            search: undefined,
+            sort: undefined
+        })
     })
 
     it('fetches pokemon with page parameter', async () => {
@@ -43,6 +48,39 @@ describe('IndexPage', () => {
         const jsx = await IndexPage({ searchParams: Promise.resolve({ page: '5' }) })
         render(jsx)
 
-        expect(fetchPokemons).toHaveBeenCalledWith(5, 20)
+        expect(fetchPokemons).toHaveBeenCalledWith({
+            page: 5,
+            limit: 20,
+            search: undefined,
+            sort: undefined
+        })
+    })
+
+    it('fetches pokemon with search parameter', async () => {
+        (fetchPokemons as jest.Mock).mockResolvedValue({ total: 0, total_pages: 0, results: [] })
+
+        const jsx = await IndexPage({ searchParams: Promise.resolve({ search: 'pikachu' }) })
+        render(jsx)
+
+        expect(fetchPokemons).toHaveBeenCalledWith({
+            page: 1,
+            limit: 20,
+            search: 'pikachu',
+            sort: undefined
+        })
+    })
+
+    it('fetches pokemon with sort parameter', async () => {
+        (fetchPokemons as jest.Mock).mockResolvedValue({ total: 0, total_pages: 0, results: [] })
+
+        const jsx = await IndexPage({ searchParams: Promise.resolve({ sort: 'name' }) })
+        render(jsx)
+
+        expect(fetchPokemons).toHaveBeenCalledWith({
+            page: 1,
+            limit: 20,
+            search: undefined,
+            sort: 'name'
+        })
     })
 })

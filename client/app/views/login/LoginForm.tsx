@@ -2,6 +2,7 @@
 
 import { useState, FormEvent } from 'react'
 import { login, ApiError } from '@/lib/api'
+import { LoadingSpinner } from '@/components/UIComponents'
 
 /**
  * LoginForm component - Client Component
@@ -176,7 +177,7 @@ export default function LoginForm() {
           aria-label="Log in to your account"
           className="bg-[var(--primary-red)] text-white w-full hover:bg-gray-50 active:scale-[0.98] disabled:bg-gray-200 disabled:text-white font-bold py-4 px-6 rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-red-600 shadow-inner text-lg uppercase tracking-wide"
         >
-          {isLoading ? 'LOGIN...' : 'LOGIN'}
+          {isLoading ? <LoadingSpinner className="w-6 h-6 border-white" /> : 'LOGIN'}
         </button>
       </div>
     </form>

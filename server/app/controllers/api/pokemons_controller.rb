@@ -17,17 +17,21 @@ class Api::PokemonsController < ApplicationController
   before_action :require_authentication
 
   ##
-  # List Pokemon with pagination
+  # List Pokemon with pagination, search, and sorting
   #
   # @param page [Integer] Page number (default: 1)
   # @param limit [Integer] Items per page (default: 20)
+  # @param search [String] Optional search term for filtering by name
+  # @param sort [String] Optional sort field ('name' or 'number')
   # @return [JSON] Paginated Pokemon list from PokeAPI
   # @return [JSON] Error message with appropriate status on failure
   def index
     page = params[:page]&.to_i || 1
     limit = params[:limit]&.to_i || 20
+    search = params[:search].presence
+    sort = params[:sort].presence
 
-    pokemon_data = pokemon_service.fetch_list(page: page, limit: limit)
+    pokemon_data = pokemon_service.fetch_list(page: page, limit: limit, search: search, sort: sort)
     render json: pokemon_data, status: :ok
   rescue PokemonService::ServiceError => e
     render json: { error: "PokeAPI error: #{e.message}" }, status: :service_unavailable

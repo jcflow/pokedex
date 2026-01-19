@@ -139,6 +139,191 @@ RSpec.describe PokemonService do
           .to raise_error(PokemonService::ServiceError, /network error/i)
       end
     end
+
+    context 'with search parameter' do
+      let(:mock_full_response) do
+        {
+          'count' => 5,
+          'next' => nil,
+          'previous' => nil,
+          'results' => [
+            { 'name' => 'pikachu', 'url' => 'https://pokeapi.co/api/v2/pokemon/25/' },
+            { 'name' => 'pichu', 'url' => 'https://pokeapi.co/api/v2/pokemon/172/' },
+            { 'name' => 'bulbasaur', 'url' => 'https://pokeapi.co/api/v2/pokemon/1/' },
+            { 'name' => 'charmander', 'url' => 'https://pokeapi.co/api/v2/pokemon/4/' },
+            { 'name' => 'charmeleon', 'url' => 'https://pokeapi.co/api/v2/pokemon/5/' }
+          ]
+        }
+      end
+
+      before do
+        stub_request(:get, "#{base_url}/pokemon?offset=0&limit=10000")
+          .to_return(
+            status: 200,
+            body: mock_full_response.to_json,
+            headers: { 'Content-Type' => 'application/json' }
+          )
+      end
+
+      it 'filters results by search term' do
+        result = service.fetch_list(page: 1, limit: 20, search: 'pika')
+
+        expect(result['results'].size).to eq(1)
+        expect(result['results'].first['name']).to eq('pikachu')
+      end
+
+      it 'performs case-insensitive search' do
+        result = service.fetch_list(page: 1, limit: 20, search: 'PIKA')
+
+        expect(result['results'].size).to eq(1)
+        expect(result['results'].first['name']).to eq('pikachu')
+      end
+
+      it 'performs partial match search' do
+        result = service.fetch_list(page: 1, limit: 20, search: 'char')
+
+        expect(result['results'].size).to eq(2)
+        names = result['results'].map { |p| p['name'] }
+        expect(names).to contain_exactly('charmander', 'charmeleon')
+      end
+
+      it 'returns empty results when no match found' do
+        result = service.fetch_list(page: 1, limit: 20, search: 'xyz')
+
+        expect(result['results']).to eq([])
+        expect(result['total']).to eq(0)
+      end
+
+      it 'handles empty search string' do
+        # Empty search should use search path and return all results
+        result = service.fetch_list(page: 1, limit: 20, search: '')
+
+        expect(result['results'].size).to eq(5)
+        expect(result['total']).to eq(5)
+      end
+
+      it 'handles nil search parameter' do
+        stub_request(:get, "#{base_url}/pokemon?offset=0&limit=20")
+          .to_return(
+            status: 200,
+            body: mock_response.to_json,
+            headers: { 'Content-Type' => 'application/json' }
+          )
+
+        result = service.fetch_list(page: 1, limit: 20, search: nil)
+
+        expect(result['results']).to be_an(Array)
+      end
+
+      it 'searches by Pokemon number (ID)' do
+        result = service.fetch_list(page: 1, limit: 20, search: '25')
+
+        expect(result['results'].size).to eq(1)
+        expect(result['results'].first['name']).to eq('pikachu')
+        expect(result['results'].first['number']).to eq(25)
+      end
+
+      it 'returns empty results when searching by non-existent number' do
+        result = service.fetch_list(page: 1, limit: 20, search: '9999')
+
+        expect(result['results']).to eq([])
+        expect(result['total']).to eq(0)
+      end
+    end
+
+    context 'with sort parameter' do
+      let(:mock_full_response) do
+        {
+          'count' => 3,
+          'next' => nil,
+          'previous' => nil,
+          'results' => [
+            { 'name' => 'bulbasaur', 'url' => 'https://pokeapi.co/api/v2/pokemon/1/' },
+            { 'name' => 'charmander', 'url' => 'https://pokeapi.co/api/v2/pokemon/4/' },
+            { 'name' => 'abra', 'url' => 'https://pokeapi.co/api/v2/pokemon/63/' }
+          ]
+        }
+      end
+
+      before do
+        stub_request(:get, "#{base_url}/pokemon?offset=0&limit=10000")
+          .to_return(
+            status: 200,
+            body: mock_full_response.to_json,
+            headers: { 'Content-Type' => 'application/json' }
+          )
+      end
+
+      it 'sorts results alphabetically by name when sort=name' do
+        result = service.fetch_list(page: 1, limit: 20, sort: 'name')
+
+        names = result['results'].map { |p| p['name'] }
+        expect(names).to eq(%w[abra bulbasaur charmander])
+      end
+
+      it 'sorts results numerically by number when sort=number' do
+        result = service.fetch_list(page: 1, limit: 20, sort: 'number')
+
+        numbers = result['results'].map { |p| p['number'] }
+        expect(numbers).to eq([1, 4, 63])
+      end
+
+      it 'defaults to number sort for invalid sort value' do
+        result = service.fetch_list(page: 1, limit: 20, sort: 'invalid')
+
+        numbers = result['results'].map { |p| p['number'] }
+        expect(numbers).to eq([1, 4, 63])
+      end
+
+      it 'adds number field to results' do
+        result = service.fetch_list(page: 1, limit: 20, sort: 'number')
+
+        result['results'].each do |pokemon|
+          expect(pokemon).to have_key('number')
+          expect(pokemon['number']).to be_an(Integer)
+        end
+      end
+    end
+
+    context 'with caching for search/sort' do
+      let(:mock_full_response) do
+        {
+          'count' => 3,
+          'next' => nil,
+          'previous' => nil,
+          'results' => [
+            { 'name' => 'pikachu', 'url' => 'https://pokeapi.co/api/v2/pokemon/25/' },
+            { 'name' => 'bulbasaur', 'url' => 'https://pokeapi.co/api/v2/pokemon/1/' },
+            { 'name' => 'charmander', 'url' => 'https://pokeapi.co/api/v2/pokemon/4/' }
+          ]
+        }
+      end
+
+      before do
+        stub_request(:get, "#{base_url}/pokemon?offset=0&limit=10000")
+          .to_return(
+            status: 200,
+            body: mock_full_response.to_json,
+            headers: { 'Content-Type' => 'application/json' }
+          )
+      end
+
+      it 'caches the full list and reuses for different searches' do
+        service.fetch_list(page: 1, limit: 20, search: 'pika')
+        service.fetch_list(page: 1, limit: 20, search: 'bulb')
+
+        # Should only make one HTTP request (full list is cached)
+        expect(WebMock).to have_requested(:get, "#{base_url}/pokemon?offset=0&limit=10000").once
+      end
+
+      it 'caches the full list and reuses for different sort orders' do
+        service.fetch_list(page: 1, limit: 20, sort: 'name')
+        service.fetch_list(page: 1, limit: 20, sort: 'number')
+
+        # Should only make one HTTP request (full list is cached)
+        expect(WebMock).to have_requested(:get, "#{base_url}/pokemon?offset=0&limit=10000").once
+      end
+    end
   end
 
   describe '#fetch_detail' do

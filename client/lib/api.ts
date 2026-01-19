@@ -22,9 +22,28 @@ export class ApiError extends Error {
   }
 }
 
+/**
+ * Handles errors from API calls consistently.
+ * Re-throws ApiError instances, wraps other errors in ApiError.
+ *
+ * @param error - The caught error
+ * @param context - Description of the operation that failed
+ * @throws {ApiError} Always throws an ApiError
+ */
+function handleApiError(error: unknown, context: string): never {
+  if (error instanceof ApiError) {
+    throw error
+  }
+  throw new ApiError(
+    error instanceof Error ? error.message : `${context}: Unknown error`,
+    0
+  )
+}
 
 /**
- * Get headers with authentication token
+ * Get headers with authentication token for API requests.
+ *
+ * @returns Headers object with Content-Type and optional Authorization
  */
 async function getAuthHeaders(): Promise<HeadersInit> {
   // Fetch Pokemon data during SSR
@@ -88,15 +107,7 @@ export async function login(
 
     return loginData
   } catch (error) {
-    if (error instanceof ApiError) {
-      throw error
-    }
-
-    // Network or other errors
-    throw new ApiError(
-      error instanceof Error ? error.message : 'Network error',
-      0
-    )
+    handleApiError(error, 'Login failed')
   }
 }
 
@@ -128,15 +139,7 @@ export async function logout(): Promise<void> {
   } catch (error) {
     // Always remove token even if API call fails
     removeToken()
-
-    if (error instanceof ApiError) {
-      throw error
-    }
-
-    throw new ApiError(
-      error instanceof Error ? error.message : 'Network error',
-      0
-    )
+    handleApiError(error, 'Logout failed')
   }
 }
 
@@ -170,26 +173,49 @@ export async function checkSession(): Promise<LoginResponse | null> {
 }
 
 /**
+ * Options for fetching Pokemon list
+ */
+export interface FetchPokemonsOptions {
+  /** Page number (default: 1) */
+  page?: number
+  /** Number of Pokemon per page (default: 20) */
+  limit?: number
+  /** Search term for filtering by name or number */
+  search?: string
+  /** Sort field ('name' or 'number') */
+  sort?: 'name' | 'number'
+}
+
+/**
  * Fetch Pokemon list from API
  *
- * @param page - Page number (default: 1)
- * @param limit - Number of Pokemon per page (default: 20)
+ * @param options - Fetch options including page, limit, search, and sort
  * @returns Promise resolving to PokemonListResponse
  * @throws {ApiError} When API call fails
  *
  * @example
  * ```ts
- * const pokemons = await fetchPokemons(1, 20)
- * console.log('Found', pokemons.count, 'Pokemon')
+ * // Basic fetch
+ * const pokemons = await fetchPokemons({ page: 1, limit: 20 })
+ *
+ * // With search and sort
+ * const filtered = await fetchPokemons({ search: 'pika', sort: 'name' })
  * ```
  */
 export async function fetchPokemons(
-  page: number = 1,
-  limit: number = 20
+  options: FetchPokemonsOptions = {}
 ): Promise<PokemonListResponse> {
+  const { page = 1, limit = 20, search, sort } = options
+
   try {
+    const params = new URLSearchParams()
+    params.set('page', page.toString())
+    params.set('limit', limit.toString())
+    if (search) params.set('search', search)
+    if (sort) params.set('sort', sort)
+
     const response = await fetch(
-      `${API_BASE_URL}/api/pokemons?page=${page}&limit=${limit}`,
+      `${API_BASE_URL}/api/pokemons?${params.toString()}`,
       {
         headers: await getAuthHeaders(),
         credentials: 'include',
@@ -205,14 +231,7 @@ export async function fetchPokemons(
 
     return await response.json()
   } catch (error) {
-    if (error instanceof ApiError) {
-      throw error
-    }
-
-    throw new ApiError(
-      error instanceof Error ? error.message : 'Network error',
-      0
-    )
+    handleApiError(error, 'Failed to fetch Pokemon list')
   }
 }
 
@@ -251,13 +270,6 @@ export async function fetchPokemonDetail(
 
     return await response.json()
   } catch (error) {
-    if (error instanceof ApiError) {
-      throw error
-    }
-
-    throw new ApiError(
-      error instanceof Error ? error.message : 'Network error',
-      0
-    )
+    handleApiError(error, 'Failed to fetch Pokemon details')
   }
 }

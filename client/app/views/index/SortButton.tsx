@@ -33,7 +33,7 @@ export default function SortButton() {
         aria-label="Open sort options"
         aria-haspopup="dialog"
         aria-expanded={isOpen}
-        className="w-11 h-11 bg-white rounded-full flex items-center justify-center shadow-inner hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-white/20"
+        className="w-11 h-11 bg-white rounded-full flex items-center justify-center shadow-inner hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-white/20 cursor-pointer"
       >
         {sortBy === 'number' ? (
           <Image

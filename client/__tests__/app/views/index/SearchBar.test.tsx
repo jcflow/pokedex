@@ -1,4 +1,5 @@
 import { render, screen, fireEvent, act } from '@testing-library/react'
+import { axe } from 'jest-axe'
 import SearchBar from '@/app/views/index/SearchBar'
 
 // Mock the store
@@ -23,7 +24,13 @@ describe('SearchBar', () => {
         jest.useRealTimers()
     })
 
-    it('renders search input', () => {
+    it('should have no accessibility violations', async () => {
+        const { container } = render(<SearchBar />)
+        const results = await axe(container)
+        expect(results).toHaveNoViolations()
+    }, 10000)
+
+    it('renders search input correctly', () => {
         render(<SearchBar />)
         expect(screen.getByRole('searchbox')).toBeInTheDocument()
         expect(screen.getByPlaceholderText('Search')).toBeInTheDocument()

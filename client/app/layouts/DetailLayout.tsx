@@ -1,12 +1,41 @@
 import Image from "next/image"
 import pokeballIcon from "@/icons/pokeball.svg"
 
+/**
+ * Props for DetailLayout component
+ */
 interface DetailLayoutProps {
-    header: React.ReactNode
-    children: React.ReactNode
-    mainColor: string
+  /** Header content (typically BackButton, title, and Pokemon number) */
+  header: React.ReactNode
+  /** Main content area (Pokemon image, types, stats, etc.) */
+  children: React.ReactNode
+  /** CSS color value for background (e.g., "var(--color-fire)") */
+  mainColor: string
 }
 
+/**
+ * DetailLayout - Pokemon detail page layout
+ *
+ * Provides a full-screen colored background with:
+ * - Decorative pokeball watermark in top-right corner
+ * - Header section with navigation and title
+ * - Flexible content area for Pokemon details
+ *
+ * The background color dynamically matches the Pokemon's primary type.
+ *
+ * @param props - Component props
+ * @returns Layout wrapper for Pokemon detail pages
+ *
+ * @example
+ * ```tsx
+ * <DetailLayout
+ *   header={<BackButton />}
+ *   mainColor="var(--color-fire)"
+ * >
+ *   <PokemonContent />
+ * </DetailLayout>
+ * ```
+ */
 export default function DetailLayout({
     header,
     children,

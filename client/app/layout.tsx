@@ -3,8 +3,11 @@ import './assets/css/globals.css'
 import { Providers } from '@/store/providers'
 
 export const metadata: Metadata = {
-  title: 'Pokédex',
-  description: 'A comprehensive Pokémon database application',
+  title: 'Pokedex',
+  description: 'A modern Pokedex application',
+  icons: {
+    icon: '/favicon.ico',
+  },
 }
 
 export default function RootLayout({
