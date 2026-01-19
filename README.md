@@ -288,6 +288,10 @@ The lack of a shared schema (like GraphQL or tRPC) means **I** have to manually 
 *   [**User Stories**](docs/user-stories.md)
 *   [**AI Commands Log**](docs/ai-commands-log.md)
 
+## Generative AI Tools Exercise
+
+*   [**AI Generation Prompt Exersise**](docs/ai-generation-prompt.md)
+
 ## Future Improvements
 
 *   [ ] **CI/CD Pipeline**: Setup GitHub Actions for automated linting and testing on every PR.
